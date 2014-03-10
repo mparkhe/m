@@ -11,3 +11,12 @@
 *.lai
 *.la
 *.a
+
+# Compiled binaries
+a.out*
+
+# Vim-ness
+*.swp
+
+# mac stuff
+.DS_Store

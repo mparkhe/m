@@ -5,6 +5,7 @@
 #include <future>
 #include <atomic>
 #include <string>
+#include <random>
 
 using std::cout;
 using std::endl;
@@ -17,7 +18,7 @@ class FactorialStore {
   atomic<bool>                  _flag;
 public:
   FactorialStore(void) : _cache({{1, 1}, {2, 2}}), _flag(false) {}
-  bool cached(int i, long long &fact) {
+  bool get(int i, long long &fact) {
     bool locked = false, rsl = false;
     fact = 0;
     while (! _flag.compare_exchange_weak(locked, true)) locked = false;
@@ -27,7 +28,7 @@ public:
     return rsl;
   }
 
-  void store(int i, long long fact) {
+  void set(int i, long long fact) {
     bool locked = false;
     while (! _flag.compare_exchange_weak(locked, true)) locked = false;
     _cache.insert(std::make_pair(i, fact));
@@ -46,12 +47,24 @@ IO & operator << (IO & io, const vector<Type> & v) {
   return io;
 }
 
+long long factorial(int i, FactorialStore &cache) {
+  long long rsl;
+  if (cache.get(i, rsl)) return rsl;
+  rsl = factorial(i - 1, cache) + factorial(i - 2, cache);
+  cache.set(i, rsl);
+  return rsl;
+}
+
 int main(int argc, char ** argv) {
   vector<int> numbers;
-  std::generate_n(std::back_inserter(numbers), argc - 1,
-                  [&argv](void)->int{static int i = 1; return std::stoi(argv[i++]); });
+  int n = std::stoi(argv[1]);
+  std::random_device dev;
+  std::generate_n(std::back_inserter(numbers), n, [&dev]{return dev() % 100 + 1; });
 
   cout << numbers << endl;
+
+  FactorialStore cache;
+  for (auto n : numbers) { cout << n << "->" << factorial(n, cache) << endl; }
 
   return 0;
 }
