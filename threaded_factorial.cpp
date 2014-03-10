@@ -63,8 +63,10 @@ int main(int argc, char ** argv) {
 
   cout << numbers << endl;
 
+  vector<std::future<long long>> futs;
   FactorialStore cache;
-  for (auto n : numbers) { cout << n << "->" << factorial(n, cache) << endl; }
+  for (auto n : numbers) { futs.push_back(std::async([n, &cache]{ return factorial(n, cache); })); }
+  for (int i = 0; i < numbers.size(); ++i) { cout << numbers[i] << "->" << futs[i].get() << endl; }
 
   return 0;
 }
